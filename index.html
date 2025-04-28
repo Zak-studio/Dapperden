@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dapperden</title>
-    <!-- Include Cropper.js CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
     <style>
         body {
@@ -15,7 +14,8 @@
             margin: 0;
         }
         .container {
-            max-width: 90vw;
+            max-width: 800px;
+            width: 90vw;
             margin: 0 auto;
             background: white;
             padding: 2vw;
@@ -31,9 +31,9 @@
         input, button {
             margin: 1vh 0;
             padding: 1vw;
-            font-size: clamp(14px, 2vw, 16px);
-            width: 80%;
-            max-width: 300px;
+            font-size: clamp(14px, 2.5vw, 18px);
+            width: 85%;
+            max-width: 350px;
             box-sizing: border-box;
         }
         button {
@@ -42,16 +42,15 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            padding: 1.5vh 2vw;
+            padding: 1.5vh 3vw;
         }
         button:hover {
             background-color: #218838;
         }
         h1 {
-            font-size: clamp(20px, 5vw, 36px);
+            font-size: clamp(24px, 5vw, 40px);
         }
 
-        /* Modal Styles */
         .modal {
             display: none;
             position: fixed;
@@ -84,23 +83,27 @@
 
         @media (max-width: 768px) {
             .container {
-                padding: 3vw;
+                padding: 2.5vw;
             }
             input, button {
                 width: 90%;
+                padding: 1.5vw;
+            }
+            button {
+                padding: 2vh 4vw;
             }
         }
 
         @media (max-width: 480px) {
             .container {
-                padding: 4vw;
+                padding: 3vw;
             }
             input, button {
                 padding: 2vw;
-                font-size: clamp(12px, 3vw, 14px);
+                font-size: clamp(12px, 3vw, 16px);
             }
             button {
-                padding: 2vh 3vw;
+                padding: 2vh 5vw;
             }
         }
     </style>
@@ -124,12 +127,22 @@
         <div class="modal-content">
             <img id="imageToCrop" src="" alt="Image to crop">
             <br>
-            <button onclick="cropImage()">Crop & Use</button>
+            <button onclick="cropImage()">Crop</button>
             <button onclick="cancelCrop()">Cancel</button>
         </div>
     </div>
 
-    <!-- Include Cropper.js JavaScript -->
+    <!-- Confirmation Popup -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h3>Confirm Cropped Image</h3>
+            <img id="croppedImagePreview" src="" alt="Cropped image preview">
+            <br>
+            <button onclick="acceptCrop()">Accept</button>
+            <button onclick="rejectCrop()">Cancel</button>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <script>
         const canvas = document.getElementById('canvas');
@@ -138,21 +151,23 @@
         const textInput = document.getElementById('textInput');
         const downloadLink = document.getElementById('downloadLink');
         const cropModal = document.getElementById('cropModal');
+        const confirmModal = document.getElementById('confirmModal');
         const imageToCrop = document.getElementById('imageToCrop');
+        const croppedImagePreview = document.getElementById('croppedImagePreview');
 
         let uploadedImage = null;
         let logoImage = null;
         let cropper = null;
+        let croppedImageData = null;
 
-        // Load Dapper Den logo
+        // Load your logo from the GitHub repository
         logoImage = new Image();
-        logoImage.src = 'https://i.ibb.co/z7YkG5Z/dapper-den-logo.png';
-        logoImage.crossOrigin = 'Anonymous';
+        logoImage.src = './logo.png';
 
         // Dynamically set canvas size based on container width
         function resizeCanvas() {
             const containerWidth = document.querySelector('.container').clientWidth;
-            const canvasSize = Math.min(containerWidth - 40, 500);
+            const canvasSize = Math.min(containerWidth - 40, 600);
             canvas.width = canvasSize;
             canvas.height = canvasSize;
         }
@@ -172,13 +187,12 @@
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     imageToCrop.src = event.target.result;
-                    cropModal.style.display = 'flex'; // Show modal
-                    // Initialize Cropper.js
-                    if (cropper) cropper.destroy(); // Destroy previous instance
+                    cropModal.style.display = 'flex';
+                    if (cropper) cropper.destroy();
                     cropper = new Cropper(imageToCrop, {
-                        aspectRatio: NaN, // Freeform cropping
-                        viewMode: 1, // Restrict crop box to image
-                        autoCropArea: 0.8, // Default crop area
+                        aspectRatio: 1, // Square cropping
+                        viewMode: 1,
+                        autoCropArea: 0.8,
                         movable: true,
                         zoomable: true,
                         scalable: true,
@@ -190,16 +204,32 @@
 
         function cropImage() {
             if (!cropper) return;
-            // Get the cropped canvas
-            const croppedCanvas = cropper.getCroppedCanvas();
+            const croppedCanvas = cropper.getCroppedCanvas({
+                width: 600, // Match canvas size
+                height: 600,
+            });
+            croppedImageData = croppedCanvas.toDataURL('image/png');
+            croppedImagePreview.src = croppedImageData;
+            cropModal.style.display = 'none';
+            confirmModal.style.display = 'flex'; // Show confirmation popup
+        }
+
+        function acceptCrop() {
             uploadedImage = new Image();
-            uploadedImage.src = croppedCanvas.toDataURL('image/png');
+            uploadedImage.src = croppedImageData;
             uploadedImage.onload = () => {
-                cropModal.style.display = 'none'; // Hide modal
+                confirmModal.style.display = 'none';
                 cropper.destroy();
                 cropper = null;
                 generatePoster();
             };
+        }
+
+        function rejectCrop() {
+            confirmModal.style.display = 'none';
+            cropModal.style.display = 'flex'; // Reopen cropping modal
+            croppedImageData = null;
+            croppedImagePreview.src = '';
         }
 
         function cancelCrop() {
@@ -208,7 +238,7 @@
                 cropper.destroy();
                 cropper = null;
             }
-            imageInput.value = ''; // Reset file input
+            imageInput.value = '';
         }
 
         function generatePoster() {
@@ -231,18 +261,20 @@
             
             // "HAPPY CUSTOMER" text
             ctx.fillStyle = '#000';
-            ctx.font = `bold ${canvas.width * 0.06}px Arial, sans-serif`;
+            ctx.font = `bold ${canvas.width * 0.05}px Arial, sans-serif`;
             ctx.textAlign = 'center';
             ctx.fillText('HAPPY CUSTOMER', canvas.width / 2, canvas.width * 0.1);
             
-            // Draw cropped image, centered
-            const imgWidth = uploadedImage.naturalWidth;
-            const imgHeight = uploadedImage.naturalHeight;
+            // Draw cropped image, scaled with canvas
+            const targetSize = 600;
+            const scale = canvas.width / 600;
+            const imgWidth = targetSize * scale;
+            const imgHeight = targetSize * scale;
             const imgX = (canvas.width - imgWidth) / 2;
             const imgY = (canvas.height - imgHeight) / 2;
             ctx.drawImage(uploadedImage, imgX, imgY, imgWidth, imgHeight);
 
-            // Dapper Den logo at bottom
+            // Company logo at bottom
             if (logoImage.complete && logoImage.naturalWidth !== 0) {
                 const logoWidth = canvas.width * 0.24;
                 const logoHeight = canvas.width * 0.12;
