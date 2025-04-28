@@ -6,149 +6,13 @@
     <title>Dapperden</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 2vh;
-            background-color: #f4f4f4;
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .container {
-            max-width: 800px;
-            width: 90vw;
-            margin: 2vh auto;
-            background: white;
-            padding: 3vw;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        canvas {
-            border: 1px solid #ccc;
-            margin: 2vh auto;
-            width: 100%;
-            max-width: 600px;
-            height: auto;
-            display: block;
-            aspect-ratio: 9 / 16; /* Maintain 9:16 aspect ratio */
-        }
-        input, button {
-            margin: 1.5vh 0;
-            padding: 2vw;
-            font-size: clamp(14px, 4vw, 18px);
-            width: 90%;
-            max-width: 400px;
-            box-sizing: border-box;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-        button {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            padding: 2vh 4vw;
-            font-weight: bold;
-        }
-        button:hover {
-            background-color: #218838;
-        }
-        h1 {
-            font-size: clamp(20px, 6vw, 40px);
-            margin: 1vh 0;
-        }
-        #downloadButton {
-            display: none;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            padding: 2vh 4vw;
-            font-size: clamp(14px, 3.5vw, 18px);
-            font-weight: bold;
-            margin: 1vh 0;
-        }
-        #downloadButton:hover {
-            background-color: #218838;
-        }
+        /* ... (keep all existing styles) ... */
 
-        /* Modal for cropping */
-        .modal {
+        /* Share options modal */
+        .share-modal {
             display: none;
             position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-content {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 600px;
-            text-align: center;
-            position: relative;
-        }
-        .modal-content img {
-            max-width: 100%;
-            max-height: 60vh;
-            margin-bottom: 20px;
-        }
-        .modal-content button {
-            margin: 10px;
-            width: 100%;
-            max-width: 200px;
-            padding: 12px;
-            font-size: clamp(14px, 4vw, 16px);
-        }
-        .rotate-button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            padding: 12px;
-            margin: 5px;
-        }
-        .rotate-button:hover {
-            background-color: #0056b3;
-        }
-        .button-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-        .rotate-buttons {
-            display: flex;
-            flex-direction: row;
-            gap: 10px;
-            justify-content: center;
-        }
-        .close {
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            font-size: 30px;
-            cursor: pointer;
-        }
-
-        /* Download status modal */
-        .download-status {
-            display: none;
-            position: fixed;
-            z-index: 2;
+            z-index: 3;
             left: 0;
             top: 0;
             width: 100%;
@@ -157,182 +21,86 @@
             justify-content: center;
             align-items: center;
         }
-        .download-status-content {
+        .share-content {
             background-color: white;
-            padding: 30px;
+            padding: 20px;
             border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
             text-align: center;
-            max-width: 300px;
-            width: 80%;
         }
-        .spinner {
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #28a745;
-            border-radius: 50%;
+        .share-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .share-options {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .share-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        .share-option:hover {
+            background-color: #f0f0f0;
+        }
+        .share-icon {
             width: 50px;
             height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .download-text {
-            font-size: 18px;
             margin-bottom: 10px;
         }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 4vw;
-            }
-            input, button, #downloadButton {
-                width: 95%;
-                padding: 2.5vw;
-            }
-            button, #downloadButton {
-                padding: 2.5vh 5vw;
-            }
-            .modal-content {
-                width: 90%;
-                padding: 15px;
-            }
-            .modal-content img {
-                max-height: 50vh;
-            }
-            .modal-content button {
-                padding: 10px;
-                font-size: clamp(12px, 3.5vw, 14px);
-            }
-            .rotate-button {
-                padding: 10px;
-                font-size: clamp(12px, 3.5vw, 14px);
-            }
-            .download-status-content {
-                padding: 20px;
-            }
-            .spinner {
-                width: 40px;
-                height: 40px;
-                border-width: 4px;
-            }
-            .download-text {
-                font-size: 16px;
-            }
+        .share-name {
+            font-size: 14px;
+        }
+        .share-cancel {
+            background-color: #f0f0f0;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
         }
 
         @media (max-width: 480px) {
-            .container {
-                padding: 5vw;
-                margin: 1vh auto;
+            .share-options {
+                flex-wrap: wrap;
             }
-            input, button, #downloadButton {
-                padding: 3vw;
-                font-size: clamp(12px, 3.8vw, 16px);
-            }
-            button, #downloadButton {
-                padding: 3vh 6vw;
-            }
-            canvas {
-                max-width: 300px;
-            }
-            .modal-content {
-                width: 95%;
-                padding: 10px;
-            }
-            .modal-content img {
-                max-height: 45vh;
-            }
-            .modal-content button {
-                padding: 8px;
-                font-size: clamp(12px, 3.2vw, 14px);
-            }
-            .rotate-button {
-                padding: 8px;
-                font-size: clamp(12px, 3.2vw, 14px);
-            }
-            .rotate-buttons {
-                flex-direction: column;
-                gap: 8px;
-            }
-            .download-status-content {
-                padding: 15px;
-            }
-            .spinner {
-                width: 30px;
-                height: 30px;
-                border-width: 3px;
-            }
-            .download-text {
-                font-size: 14px;
-            }
-        }
-
-        @media (max-width: 375px) {
-            .container {
-                padding: 6vw;
-            }
-            input, button, #downloadButton {
-                padding: 3.5vw;
-                font-size: clamp(12px, 4vw, 14px);
-            }
-            button, #downloadButton {
-                padding: 3vh 7vw;
-            }
-            canvas {
-                max-width: 280px;
-            }
-            .modal-content {
-                width: 98%;
-                padding: 8px;
-            }
-            .modal-content img {
-                max-height: 40vh;
-            }
-            .modal-content button {
-                padding: 8px;
-                font-size: clamp(12px, 4vw, 14px);
-            }
-            .rotate-button {
-                padding: 8px;
-                font-size: clamp(12px, 4vw, 14px);
+            .share-option {
+                width: 50%;
+                margin-bottom: 10px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>DAPPERDEN</h1>
-        <input type="file" id="imageInput" accept="image/*" />
-        <br>
-        <button onclick="generatePoster()">Generate Poster</button>
-        <br>
-        <canvas id="canvas"></canvas>
-        <br>
-        <button id="downloadButton" style="display: none;">Download Poster</button>
-    </div>
+    <!-- ... (keep all existing HTML) ... -->
 
-    <!-- Modal for cropping -->
-    <div id="cropModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeCropModal()">×</span>
-            <img id="imageToCrop" src="" alt="Image to crop">
-            <div class="button-container">
-                <button onclick="cropImage()">Done</button>
-                <div class="rotate-buttons">
-                    <button class="rotate-button" onclick="rotateLeft()">Rotate Left</button>
-                    <button class="rotate-button" onclick="rotateRight()">Rotate Right</button>
+    <!-- Share options modal -->
+    <div id="shareModal" class="share-modal">
+        <div class="share-content">
+            <div class="share-title">Share Your Poster</div>
+            <div class="share-options">
+                <div class="share-option" onclick="shareOnWhatsApp()">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="share-icon" alt="WhatsApp">
+                    <div class="share-name">WhatsApp</div>
+                </div>
+                <div class="share-option" onclick="shareOnInstagram()">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg" class="share-icon" alt="Instagram">
+                    <div class="share-name">Instagram</div>
+                </div>
+                <div class="share-option" onclick="downloadPoster()">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3580/3580168.png" class="share-icon" alt="Download">
+                    <div class="share-name">Save to Gallery</div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Download status modal -->
-    <div id="downloadStatus" class="download-status">
-        <div class="download-status-content">
-            <div class="spinner"></div>
-            <div class="download-text">Downloading your poster...</div>
+            <button class="share-cancel" onclick="closeShareModal()">Cancel</button>
         </div>
     </div>
 
@@ -345,6 +113,7 @@
         const cropModal = document.getElementById('cropModal');
         const imageToCrop = document.getElementById('imageToCrop');
         const downloadStatus = document.getElementById('downloadStatus');
+        const shareModal = document.getElementById('shareModal');
 
         let uploadedImage = null;
         let frameImage = null;
@@ -356,7 +125,6 @@
         frameImage.src = './frame.png';
 
         function resizeCanvas() {
-            // Set the actual canvas resolution to 2160x3840px (9:16)
             canvas.width = 2160;
             canvas.height = 3840;
         }
@@ -364,8 +132,6 @@
         resizeCanvas();
 
         window.addEventListener('resize', () => {
-            // No need to resize the canvas resolution on window resize
-            // The CSS will handle the display scaling
             if (uploadedImage) generatePoster();
         });
 
@@ -378,13 +144,13 @@
                     cropModal.style.display = 'flex';
                     if (cropper) cropper.destroy();
                     cropper = new Cropper(imageToCrop, {
-                        aspectRatio: 1, // Match the 1:1 aspect ratio of the area
+                        aspectRatio: 1,
                         viewMode: 1,
-                        autoCropArea: 1.0, // Crop the entire area
+                        autoCropArea: 1.0,
                         movable: true,
                         zoomable: true,
                         scalable: true,
-                        rotatable: true, // Enable rotation
+                        rotatable: true,
                     });
                 };
                 reader.readAsDataURL(file);
@@ -392,34 +158,28 @@
         });
 
         function rotateLeft() {
-            if (cropper) {
-                cropper.rotate(-90); // Rotate left by 90 degrees
-            }
+            if (cropper) cropper.rotate(-90);
         }
 
         function rotateRight() {
-            if (cropper) {
-                cropper.rotate(90); // Rotate right by 90 degrees
-            }
+            if (cropper) cropper.rotate(90);
         }
 
         function closeCropModal() {
             cropModal.style.display = 'none';
-            if (cropper) {
-                cropImage(); // Automatically crop when closing the modal
-            }
+            if (cropper) cropImage();
         }
 
         function cropImage() {
             if (cropper) {
                 const croppedCanvas = cropper.getCroppedCanvas({
-                    width: 1728, // Force the output to be exactly 1728x1728
+                    width: 1728,
                     height: 1728,
                     minWidth: 1728,
                     minHeight: 1728,
                     maxWidth: 1728,
                     maxHeight: 1728,
-                    fillColor: '#fff' // Fill any empty areas with white
+                    fillColor: '#fff'
                 });
                 uploadedImage = new Image();
                 uploadedImage.src = croppedCanvas.toDataURL('image/png');
@@ -440,51 +200,75 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Define the photo area (1728x1728px)
             const photoAreaWidth = 1728;
             const photoAreaHeight = 1728;
-            const photoAreaX = (canvas.width - photoAreaWidth) / 2; // Center horizontally: 216px
-            const photoAreaY = 1000; // Position 400px from the top
+            const photoAreaX = (canvas.width - photoAreaWidth) / 2;
+            const photoAreaY = 1000;
 
-            // Draw the uploaded photo - it will be exactly 1728x1728 since we cropped it that way
             ctx.drawImage(uploadedImage, photoAreaX, photoAreaY, photoAreaWidth, photoAreaHeight);
 
-            // Draw the default static frame over the photo
             if (frameImage.complete && frameImage.naturalWidth !== 0) {
                 ctx.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
             }
 
-            // Enable download at full resolution (2160x3840px)
             downloadUrl = canvas.toDataURL('image/png');
             downloadButton.style.display = 'block';
             downloadButton.onclick = () => {
-                // Show downloading status
-                downloadStatus.style.display = 'flex';
-                
-                // Create a small delay to allow the UI to update before starting the download
-                setTimeout(() => {
-                    const link = document.createElement('a');
-                    link.href = downloadUrl;
-                    link.download = 'poster.png';
-                    
-                    // Hide the status when download is complete
-                    link.onclick = () => {
-                        setTimeout(() => {
-                            downloadStatus.style.display = 'none';
-                        }, 1000);
-                    };
-                    
-                    // For browsers that don't support the onclick event on a tags
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    
-                    // Hide the status after a reasonable time in case the onclick doesn't fire
-                    setTimeout(() => {
-                        downloadStatus.style.display = 'none';
-                    }, 3000);
-                }, 100);
+                shareModal.style.display = 'flex';
             };
+        }
+
+        function closeShareModal() {
+            shareModal.style.display = 'none';
+        }
+
+        function shareOnWhatsApp() {
+            shareModal.style.display = 'none';
+            downloadStatus.style.display = 'flex';
+            
+            setTimeout(() => {
+                const link = document.createElement('a');
+                link.href = `whatsapp://send?text=Check out my poster! ${encodeURIComponent(downloadUrl)}`;
+                link.click();
+                
+                setTimeout(() => {
+                    downloadStatus.style.display = 'none';
+                }, 3000);
+            }, 100);
+        }
+
+        function shareOnInstagram() {
+            shareModal.style.display = 'none';
+            downloadStatus.style.display = 'flex';
+            
+            setTimeout(() => {
+                // Instagram doesn't have a direct share API, so we'll download the image first
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = 'poster-for-instagram.png';
+                link.click();
+                
+                setTimeout(() => {
+                    downloadStatus.style.display = 'none';
+                    alert('Your poster has been downloaded. You can now share it on Instagram from your gallery.');
+                }, 3000);
+            }, 100);
+        }
+
+        function downloadPoster() {
+            shareModal.style.display = 'none';
+            downloadStatus.style.display = 'flex';
+            
+            setTimeout(() => {
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = 'dapperden-poster.png';
+                link.click();
+                
+                setTimeout(() => {
+                    downloadStatus.style.display = 'none';
+                }, 3000);
+            }, 100);
         }
     </script>
 </body>
