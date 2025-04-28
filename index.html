@@ -52,7 +52,7 @@
             border-radius: 5px;
             cursor: pointer;
             padding: 2vh 4vw;
-            font-weight: bold; /* Make text bolder */
+            font-weight: bold;
         }
         button:hover {
             background-color: #218838;
@@ -70,7 +70,7 @@
             cursor: pointer;
             padding: 2vh 4vw;
             font-size: clamp(14px, 3.5vw, 18px);
-            font-weight: bold; /* Make text bolder */
+            font-weight: bold;
             margin: 1vh 0;
         }
         #downloadButton:hover {
@@ -107,6 +107,10 @@
         }
         .modal-content button {
             margin: 10px;
+            width: 100%;
+            max-width: 200px;
+            padding: 12px;
+            font-size: clamp(14px, 4vw, 16px);
         }
         .rotate-button {
             background-color: #007bff;
@@ -114,11 +118,23 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            padding: 10px 20px;
+            padding: 12px;
             margin: 5px;
         }
         .rotate-button:hover {
             background-color: #0056b3;
+        }
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .rotate-buttons {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+            justify-content: center;
         }
         .close {
             position: absolute;
@@ -139,6 +155,21 @@
             button, #downloadButton {
                 padding: 2.5vh 5vw;
             }
+            .modal-content {
+                width: 90%;
+                padding: 15px;
+            }
+            .modal-content img {
+                max-height: 50vh;
+            }
+            .modal-content button {
+                padding: 10px;
+                font-size: clamp(12px, 3.5vw, 14px);
+            }
+            .rotate-button {
+                padding: 10px;
+                font-size: clamp(12px, 3.5vw, 14px);
+            }
         }
 
         @media (max-width: 480px) {
@@ -158,6 +189,22 @@
             }
             .modal-content {
                 width: 95%;
+                padding: 10px;
+            }
+            .modal-content img {
+                max-height: 45vh;
+            }
+            .modal-content button {
+                padding: 8px;
+                font-size: clamp(12px, 3.2vw, 14px);
+            }
+            .rotate-button {
+                padding: 8px;
+                font-size: clamp(12px, 3.2vw, 14px);
+            }
+            .rotate-buttons {
+                flex-direction: column;
+                gap: 8px;
             }
         }
 
@@ -174,6 +221,21 @@
             }
             canvas {
                 max-width: 280px;
+            }
+            .modal-content {
+                width: 98%;
+                padding: 8px;
+            }
+            .modal-content img {
+                max-height: 40vh;
+            }
+            .modal-content button {
+                padding: 8px;
+                font-size: clamp(12px, 4vw, 14px);
+            }
+            .rotate-button {
+                padding: 8px;
+                font-size: clamp(12px, 4vw, 14px);
             }
         }
     </style>
@@ -195,11 +257,13 @@
         <div class="modal-content">
             <span class="close" onclick="closeCropModal()">×</span>
             <img id="imageToCrop" src="" alt="Image to crop">
-            <br>
-            <button class="rotate-button" onclick="rotateLeft()">Rotate Left</button>
-            <button class="rotate-button" onclick="rotateRight()">Rotate Right</button>
-            <br>
-            <button onclick="cropImage()">Done</button>
+            <div class="button-container">
+                <button onclick="cropImage()">Done</button>
+                <div class="rotate-buttons">
+                    <button class="rotate-button" onclick="rotateLeft()">Rotate Left</button>
+                    <button class="rotate-button" onclick="rotateRight()">Rotate Right</button>
+                </div>
+            </div>
         </div>
     </div>
 
