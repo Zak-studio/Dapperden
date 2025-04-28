@@ -33,7 +33,7 @@
             max-width: 600px;
             height: auto;
             display: block;
-            aspect-ratio: 9 / 16; /* Maintain 9:16 aspect ratio */
+            aspect-ratio: 9 / 16;
         }
         input, button {
             margin: 1.5vh 0;
@@ -76,8 +76,6 @@
         #downloadButton:hover {
             background-color: #218838;
         }
-
-        /* Modal for cropping */
         .modal {
             display: none;
             position: fixed;
@@ -142,6 +140,30 @@
             right: 20px;
             font-size: 30px;
             cursor: pointer;
+        }
+        #shareModal .modal-content button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 12px;
+            margin: 5px;
+        }
+        #shareModal .modal-content button:hover {
+            background-color: #218838;
+        }
+        #shareModal .modal-content button.instagram {
+            background-color: #e1306c;
+        }
+        #shareModal .modal-content button.instagram:hover {
+            background-color: #c13584;
+        }
+        #shareModal .modal-content button.whatsapp {
+            background-color: #25d366;
+        }
+        #shareModal .modal-content button.whatsapp:hover {
+            background-color: #20b358;
         }
 
         @media (max-width: 768px) {
@@ -267,6 +289,19 @@
         </div>
     </div>
 
+    <!-- Modal for sharing -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeShareModal()">×</span>
+            <h2>Share or Save Poster</h2>
+            <div class="button-container">
+                <button class="whatsapp" onclick="shareWhatsApp()">Share on WhatsApp</button>
+                <button class="instagram" onclick="shareInstagram()">Share on Instagram</button>
+                <button onclick="saveToGallery()">Save to Gallery</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
     <script>
         const canvas = document.getElementById('canvas');
@@ -274,6 +309,7 @@
         const imageInput = document.getElementById('imageInput');
         const downloadButton = document.getElementById('downloadButton');
         const cropModal = document.getElementById('cropModal');
+        const shareModal = document.getElementById('shareModal');
         const imageToCrop = document.getElementById('imageToCrop');
 
         let uploadedImage = null;
@@ -286,7 +322,6 @@
         frameImage.src = './frame.png';
 
         function resizeCanvas() {
-            // Set the actual canvas resolution to 2160x3840px (9:16)
             canvas.width = 2160;
             canvas.height = 3840;
         }
@@ -294,8 +329,6 @@
         resizeCanvas();
 
         window.addEventListener('resize', () => {
-            // No need to resize the canvas resolution on window resize
-            // The CSS will handle the display scaling
             if (uploadedImage) generatePoster();
         });
 
@@ -308,13 +341,13 @@
                     cropModal.style.display = 'flex';
                     if (cropper) cropper.destroy();
                     cropper = new Cropper(imageToCrop, {
-                        aspectRatio: 1, // Match the 1:1 aspect ratio of the green area
+                        aspectRatio: 1,
                         viewMode: 1,
                         autoCropArea: 0.8,
                         movable: true,
                         zoomable: true,
                         scalable: true,
-                        rotatable: true, // Enable rotation
+                        rotatable: true,
                     });
                 };
                 reader.readAsDataURL(file);
@@ -323,21 +356,25 @@
 
         function rotateLeft() {
             if (cropper) {
-                cropper.rotate(-90); // Rotate left by 90 degrees
+                cropper.rotate(-90);
             }
         }
 
         function rotateRight() {
             if (cropper) {
-                cropper.rotate(90); // Rotate right by 90 degrees
+                cropper.rotate(90);
             }
         }
 
         function closeCropModal() {
             cropModal.style.display = 'none';
             if (cropper) {
-                cropImage(); // Automatically crop when closing the modal
+                cropImage();
             }
+        }
+
+        function closeShareModal() {
+            shareModal.style.display = 'none';
         }
 
         function cropImage() {
@@ -362,51 +399,64 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Define the green box area (where the photo will be placed)
-            const photoAreaWidth = 1728; // 80% of canvas width (2160px)
-            const photoAreaHeight = 1728; // Square area (1:1 aspect ratio)
-            const photoAreaX = (canvas.width - photoAreaWidth) / 2; // Center horizontally: 216px
-            const photoAreaY = 400; // Position 400px from the top
+            const photoAreaWidth = 1728;
+            const photoAreaHeight = 1728;
+            const photoAreaX = (canvas.width - photoAreaWidth) / 2;
+            const photoAreaY = 400;
 
-            // Fill the photo area with white (for letterboxing)
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(photoAreaX, photoAreaY, photoAreaWidth, photoAreaHeight);
 
-            // Scale the uploaded photo to fit within the green box while preserving aspect ratio
             const photoAspectRatio = uploadedImage.width / uploadedImage.height;
             let photoWidth, photoHeight, photoX, photoY;
 
             if (photoAspectRatio > 1) {
-                // Photo is wider than tall: fit to width, letterbox height
                 photoWidth = photoAreaWidth;
                 photoHeight = photoAreaWidth / photoAspectRatio;
                 photoX = photoAreaX;
-                photoY = photoAreaY + (photoAreaHeight - photoHeight) / 2; // Center vertically
+                photoY = photoAreaY + (photoAreaHeight - photoHeight) / 2;
             } else {
-                // Photo is taller than wide: fit to height, letterbox width
                 photoHeight = photoAreaHeight;
                 photoWidth = photoAreaHeight * photoAspectRatio;
-                photoX = photoAreaX + (photoAreaWidth - photoWidth) / 2; // Center horizontally
+                photoX = photoAreaX + (photoAreaWidth - photoWidth) / 2;
                 photoY = photoAreaY;
             }
 
-            // Draw the uploaded photo
             ctx.drawImage(uploadedImage, photoX, photoY, photoWidth, photoHeight);
 
-            // Draw the default static frame over the photo
             if (frameImage.complete && frameImage.naturalWidth !== 0) {
                 ctx.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
             }
 
-            // Enable download at full resolution (2160x3840px)
             downloadUrl = canvas.toDataURL('image/png');
             downloadButton.style.display = 'block';
             downloadButton.onclick = () => {
-                const link = document.createElement('a');
-                link.href = downloadUrl;
-                link.download = 'poster.png';
-                link.click();
+                shareModal.style.display = 'flex';
             };
+        }
+
+        function saveToGallery() {
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = 'poster.png';
+            link.click();
+            closeShareModal();
+        }
+
+        function shareWhatsApp() {
+            // Note: Direct image sharing to WhatsApp via web is not supported.
+            // We'll save the image to the gallery and prompt the user to share it manually.
+            saveToGallery();
+            alert('Image saved to gallery. Open WhatsApp, select the image from your gallery, and share it with your contacts.');
+            closeShareModal();
+        }
+
+        function shareInstagram() {
+            // Instagram doesn't support direct image sharing via web.
+            // We'll save the image to the gallery and prompt the user to share it manually.
+            saveToGallery();
+            alert('Image saved to gallery. Open Instagram, create a new post or story, and select the image from your gallery to share.');
+            closeShareModal();
         }
     </script>
 </body>
