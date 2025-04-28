@@ -32,7 +32,6 @@
             max-width: 600px;
             height: auto;
             display: block;
-            aspect-ratio: 3375 / 6000; /* Maintain 9:16 aspect ratio */
         }
         input, button {
             margin: 1.5vh 0;
@@ -91,7 +90,7 @@
                 padding: 3vh 6vw;
             }
             canvas {
-                max-width: 300px;
+                min-width: 300px;
             }
         }
 
@@ -107,7 +106,7 @@
                 padding: 3vh 7vw;
             }
             canvas {
-                max-width: 280px;
+                min-width: 280px;
             }
         }
     </style>
@@ -143,16 +142,16 @@
         frameImage.src = './frame.png';
 
         function resizeCanvas() {
-            // Set the actual canvas resolution to 3375x6000px
-            canvas.width = 3375;
-            canvas.height = 6000;
+            const containerWidth = document.querySelector('.container').clientWidth;
+            const canvasSize = Math.max(Math.min(containerWidth - 40, 600), 280);
+            canvas.width = canvasSize;
+            canvas.height = canvasSize;
         }
 
         resizeCanvas();
 
         window.addEventListener('resize', () => {
-            // No need to resize the canvas resolution on window resize
-            // The CSS will handle the display scaling
+            resizeCanvas();
             if (uploadedImage) generatePoster();
         });
 
@@ -179,32 +178,34 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw the uploaded photo, scaled to fit 3375x6000px
-            const targetWidth = 3375;
-            const targetHeight = 6000;
-            const imgX = 0;
-            const imgY = 0;
-            ctx.drawImage(uploadedImage, imgX, imgY, targetWidth, targetHeight);
+            // Draw the uploaded photo, scaled with canvas
+            const targetSize = 600;
+            const scale = canvas.width / 600;
+            const imgWidth = targetSize * scale;
+            const imgHeight = targetSize * scale;
+            const imgX = (canvas.width - imgWidth) / 2;
+            const imgY = (canvas.height - imgHeight) / 2;
+            ctx.drawImage(uploadedImage, imgX, imgY, imgWidth, imgHeight);
 
             // Draw the default static frame over the photo
             if (frameImage.complete && frameImage.naturalWidth !== 0) {
-                const frameWidth = targetWidth;
-                const frameHeight = targetHeight;
-                const frameX = 0;
-                const frameY = 0;
+                const frameWidth = targetSize * scale;
+                const frameHeight = targetSize * scale;
+                const frameX = (canvas.width - frameWidth) / 2;
+                const frameY = (canvas.height - frameHeight) / 2;
                 ctx.drawImage(frameImage, frameX, frameY, frameWidth, frameHeight);
             }
 
             // Draw the logo at the bottom
             if (logoImage.complete && logoImage.naturalWidth !== 0) {
-                const logoWidth = canvas.width * 0.24; // 810px at 3375px width
-                const logoHeight = canvas.width * 0.12; // 405px at 3375px width
+                const logoWidth = canvas.width * 0.24;
+                const logoHeight = canvas.width * 0.12;
                 const logoX = (canvas.width - logoWidth) / 2;
-                const logoY = canvas.height - logoHeight - (canvas.width * 0.04); // 135px offset
+                const logoY = canvas.height - logoHeight - canvas.width * 0.04;
                 ctx.drawImage(logoImage, logoX, logoY, logoWidth, logoHeight);
             }
 
-            // Enable download at full resolution (3375x6000px)
+            // Enable download
             downloadLink.href = canvas.toDataURL('image/png');
             downloadLink.download = 'poster.png';
             downloadLink.style.display = 'block';
