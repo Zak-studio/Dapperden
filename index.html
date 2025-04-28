@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dapperden</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 2vh;
+            background-color: #f4f4f4;
+            margin: 0;
+        }
+        .container {
+            max-width: 90vw; /* Scales with viewport width */
+            margin: 0 auto;
+            background: white;
+            padding: 2vw;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 1px solid #ccc;
+            margin: 2vh 0;
+            width: 100%; /* Scales with container */
+            height: auto;
+        }
+        input, button {
+            margin: 1vh 0;
+            padding: 1vw;
+            font-size: clamp(14px, 2vw, 16px); /* Scales font size */
+            width: 80%;
+            max-width: 300px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 1.5vh 2vw; /* Larger tap target for mobile */
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        h1 {
+            font-size: clamp(20px, 5vw, 36px); /* Responsive heading */
+        }
+
+        /* Media Queries for additional adjustments */
+        @media (max-width: 768px) { /* Tablets and smaller */
+            .container {
+                padding: 3vw;
+            }
+            input, button {
+                width: 90%;
+            }
+        }
+
+        @media (max-width: 480px) { /* Mobile */
+            .container {
+                padding: 4vw;
+            }
+            input, button {
+                padding: 2vw;
+                font-size: clamp(12px, 3vw, 14px);
+            }
+            button {
+                padding: 2vh 3vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DAPPERDEN</h1>
+        <input type="file" id="imageInput" accept="image/*" />
+        <br>
+        <input type="text" id="textInput" placeholder="Enter your Name" />
+        <br>
+        <button onclick="generatePoster()">Generate Poster</button>
+        <br>
+        <canvas id="canvas"></canvas>
+        <br>
+        <a id="downloadLink" style="display: none;">Download Poster</a>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const imageInput = document.getElementById('imageInput');
+        const textInput = document.getElementById('textInput');
+        const downloadLink = document.getElementById('downloadLink');
+
+        let uploadedImage = null;
+        let logoImage = null;
+
+        // Load Dapper Den logo
+        logoImage = new Image();
+        logoImage.src = 'https://i.ibb.co/z7YkG5Z/dapper-den-logo.png'; // Dapper Den logo URL
+        logoImage.crossOrigin = 'Anonymous';
+
+        // Dynamically set canvas size based on container width
+        function resizeCanvas() {
+            const containerWidth = document.querySelector('.container').clientWidth;
+            const canvasSize = Math.min(containerWidth - 40, 500); // Max 500px, adjust for padding
+            canvas.width = canvasSize;
+            canvas.height = canvasSize; // Keep square aspect ratio
+        }
+
+        // Initial canvas size
+        resizeCanvas();
+
+        // Resize canvas on window resize
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            if (uploadedImage) generatePoster(); // Redraw if image is uploaded
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    uploadedImage = new Image();
+                    uploadedImage.src = event.target.result;
+                    uploadedImage.onload = () => {
+                        generatePoster();
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function generatePoster() {
+            if (!uploadedImage) {
+                alert('Please upload an image first!');
+                return;
+            }
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Frame background
+            ctx.fillStyle = '#f0f0f0';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Decorative border
+            ctx.strokeStyle = '#28a745';
+            ctx.lineWidth = canvas.width * 0.02; // Scale border thickness
+            ctx.strokeRect(15, 15, canvas.width - 30, canvas.height - 30);
+            
+            // "HAPPY CUSTOMER" text
+            ctx.fillStyle = '#000';
+            ctx.font = `bold ${canvas.width * 0.06}px Arial, sans-serif`; // Scale font size
+            ctx.textAlign = 'center';
+            ctx.fillText('HAPPY CUSTOMER', canvas.width / 2, canvas.width * 0.1);
+            
+            // Dapper Den logo at bottom
+            if (logoImage.complete && logoImage.naturalWidth !== 0) {
+                const logoWidth = canvas.width * 0.24; // Scale logo
+                const logoHeight = canvas.width * 0.12;
+                const logoX = (canvas.width - logoWidth) / 2;
+                const logoY = canvas.height - logoHeight - canvas.width * 0.04;
+                ctx.drawImage(logoImage, logoX, logoY, logoWidth, logoHeight);
+            }
+
+            // Draw main image
+            const imgX = canvas.width * 0.06;
+            const imgY = canvas.width * 0.12;
+            const imgWidth = canvas.width - (canvas.width * 0.12);
+            const imgHeight = canvas.height - (canvas.width * 0.28);
+            ctx.drawImage(uploadedImage, imgX, imgY, imgWidth, imgHeight);
+
+            // Draw custom text
+            const text = textInput.value || 'Your Text Here';
+            ctx.fillStyle = '#000';
+            ctx.font = `${canvas.width * 0.04}px Arial`; // Scale font size
+            ctx.textAlign = 'center';
+            ctx.fillText(text, canvas.width / 2, canvas.height - (canvas.width * 0.1));
+
+            // Enable download
+            downloadLink.href = canvas.toDataURL('image/png');
+            downloadLink.download = 'poster.png';
+            downloadLink.style.display = 'block';
+            downloadLink.textContent = 'Download Poster';
+        }
+    </script>
+</body>
+</html>
