@@ -12,29 +12,37 @@
             padding: 2vh;
             background-color: #f4f4f4;
             margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         .container {
             max-width: 800px;
             width: 90vw;
-            margin: 0 auto;
+            margin: 2vh auto;
             background: white;
-            padding: 2vw;
+            padding: 3vw;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         canvas {
             border: 1px solid #ccc;
-            margin: 2vh 0;
+            margin: 2vh auto;
             width: 100%;
+            max-width: 100%;
             height: auto;
+            display: block;
         }
         input, button {
-            margin: 1vh 0;
-            padding: 1vw;
-            font-size: clamp(14px, 2.5vw, 18px);
-            width: 85%;
-            max-width: 350px;
+            margin: 1.5vh 0;
+            padding: 2vw;
+            font-size: clamp(14px, 4vw, 18px);
+            width: 90%;
+            max-width: 400px;
             box-sizing: border-box;
+            border-radius: 5px;
+            border: 1px solid #ccc;
         }
         button {
             background-color: #28a745;
@@ -42,13 +50,19 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            padding: 1.5vh 3vw;
+            padding: 2vh 4vw;
         }
         button:hover {
             background-color: #218838;
         }
         h1 {
-            font-size: clamp(24px, 5vw, 40px);
+            font-size: clamp(20px, 6vw, 40px);
+            margin: 1vh 0;
+        }
+        a {
+            font-size: clamp(14px, 3.5vw, 18px);
+            margin: 1vh 0;
+            display: inline-block;
         }
 
         .modal {
@@ -65,45 +79,87 @@
         }
         .modal-content {
             background-color: white;
-            padding: 20px;
+            padding: 3vw;
             border-radius: 10px;
             max-width: 90%;
-            max-height: 90%;
-            overflow: auto;
+            max-height: 90vh;
+            overflow-y: auto;
             text-align: center;
         }
         .modal-content img {
             max-width: 100%;
-            max-height: 60vh;
-            margin-bottom: 20px;
+            max-height: 50vh;
+            margin-bottom: 2vh;
+        }
+        .modal-content h3 {
+            font-size: clamp(16px, 4vw, 20px);
+            margin: 0 0 2vh 0;
         }
         .modal-content button {
-            margin: 0 10px;
+            margin: 1vh 2vw;
+            padding: 2vh 4vw;
+            font-size: clamp(14px, 3.5vw, 16px);
+            width: auto;
+            min-width: 120px;
         }
 
         @media (max-width: 768px) {
             .container {
-                padding: 2.5vw;
+                padding: 4vw;
             }
             input, button {
-                width: 90%;
-                padding: 1.5vw;
+                width: 95%;
+                padding: 2.5vw;
             }
             button {
-                padding: 2vh 4vw;
+                padding: 2.5vh 5vw;
+            }
+            .modal-content {
+                padding: 4vw;
             }
         }
 
         @media (max-width: 480px) {
             .container {
-                padding: 3vw;
+                padding: 5vw;
+                margin: 1vh auto;
             }
             input, button {
-                padding: 2vw;
-                font-size: clamp(12px, 3vw, 16px);
+                padding: 3vw;
+                font-size: clamp(12px, 3.8vw, 16px);
             }
             button {
-                padding: 2vh 5vw;
+                padding: 3vh 6vw;
+            }
+            canvas {
+                min-width: 300px;
+            }
+            .modal-content {
+                padding: 5vw;
+                max-height: 85vh;
+            }
+            .modal-content img {
+                max-height: 40vh;
+            }
+            .modal-content button {
+                min-width: 100px;
+                padding: 2vh 3vw;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .container {
+                padding: 6vw;
+            }
+            input, button {
+                padding: 3.5vw;
+                font-size: clamp(12px, 4vw, 14px);
+            }
+            button {
+                padding: 3vh 7vw;
+            }
+            canvas {
+                min-width: 280px;
             }
         }
     </style>
@@ -122,7 +178,6 @@
         <a id="downloadLink" style="display: none;">Download Poster</a>
     </div>
 
-    <!-- Cropping Modal -->
     <div id="cropModal" class="modal">
         <div class="modal-content">
             <img id="imageToCrop" src="" alt="Image to crop">
@@ -132,7 +187,6 @@
         </div>
     </div>
 
-    <!-- Confirmation Popup -->
     <div id="confirmModal" class="modal">
         <div class="modal-content">
             <h3>Confirm Cropped Image</h3>
@@ -160,22 +214,18 @@
         let cropper = null;
         let croppedImageData = null;
 
-        // Load your logo from the GitHub repository
         logoImage = new Image();
         logoImage.src = './logo.png';
 
-        // Dynamically set canvas size based on container width
         function resizeCanvas() {
             const containerWidth = document.querySelector('.container').clientWidth;
-            const canvasSize = Math.min(containerWidth - 40, 600);
+            const canvasSize = Math.max(Math.min(containerWidth - 40, 600), 280);
             canvas.width = canvasSize;
             canvas.height = canvasSize;
         }
 
-        // Initial canvas size
         resizeCanvas();
 
-        // Resize canvas on window resize
         window.addEventListener('resize', () => {
             resizeCanvas();
             if (uploadedImage) generatePoster();
@@ -190,7 +240,7 @@
                     cropModal.style.display = 'flex';
                     if (cropper) cropper.destroy();
                     cropper = new Cropper(imageToCrop, {
-                        aspectRatio: 1, // Square cropping
+                        aspectRatio: 1,
                         viewMode: 1,
                         autoCropArea: 0.8,
                         movable: true,
@@ -205,13 +255,13 @@
         function cropImage() {
             if (!cropper) return;
             const croppedCanvas = cropper.getCroppedCanvas({
-                width: 600, // Match canvas size
+                width: 600,
                 height: 600,
             });
             croppedImageData = croppedCanvas.toDataURL('image/png');
             croppedImagePreview.src = croppedImageData;
             cropModal.style.display = 'none';
-            confirmModal.style.display = 'flex'; // Show confirmation popup
+            confirmModal.style.display = 'flex';
         }
 
         function acceptCrop() {
@@ -227,7 +277,7 @@
 
         function rejectCrop() {
             confirmModal.style.display = 'none';
-            cropModal.style.display = 'flex'; // Reopen cropping modal
+            cropModal.style.display = 'flex';
             croppedImageData = null;
             croppedImagePreview.src = '';
         }
@@ -247,25 +297,20 @@
                 return;
             }
 
-            // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Frame background
             ctx.fillStyle = '#f0f0f0';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Decorative border
             ctx.strokeStyle = '#28a745';
             ctx.lineWidth = canvas.width * 0.02;
             ctx.strokeRect(15, 15, canvas.width - 30, canvas.height - 30);
             
-            // "HAPPY CUSTOMER" text
             ctx.fillStyle = '#000';
-            ctx.font = `bold ${canvas.width * 0.05}px Arial, sans-serif`;
+            ctx.font = `bold ${canvas.width * 0.06}px Arial, sans-serif`;
             ctx.textAlign = 'center';
             ctx.fillText('HAPPY CUSTOMER', canvas.width / 2, canvas.width * 0.1);
             
-            // Draw cropped image, scaled with canvas
             const targetSize = 600;
             const scale = canvas.width / 600;
             const imgWidth = targetSize * scale;
@@ -274,7 +319,6 @@
             const imgY = (canvas.height - imgHeight) / 2;
             ctx.drawImage(uploadedImage, imgX, imgY, imgWidth, imgHeight);
 
-            // Company logo at bottom
             if (logoImage.complete && logoImage.naturalWidth !== 0) {
                 const logoWidth = canvas.width * 0.24;
                 const logoHeight = canvas.width * 0.12;
@@ -283,14 +327,12 @@
                 ctx.drawImage(logoImage, logoX, logoY, logoWidth, logoHeight);
             }
 
-            // Draw custom text
             const text = textInput.value || 'Your Text Here';
             ctx.fillStyle = '#000';
-            ctx.font = `${canvas.width * 0.04}px Arial`;
+            ctx.font = `${canvas.width * 0.05}px Arial`;
             ctx.textAlign = 'center';
             ctx.fillText(text, canvas.width / 2, canvas.height - (canvas.width * 0.1));
 
-            // Enable download
             downloadLink.href = canvas.toDataURL('image/png');
             downloadLink.download = 'poster.png';
             downloadLink.style.display = 'block';
