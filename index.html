@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dapperden</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 2vh;
+            background-color: #f4f4f4;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            max-width: 800px;
+            width: 90vw;
+            margin: 2vh auto;
+            background: white;
+            padding: 3vw;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 1px solid #ccc;
+            margin: 2vh auto;
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            display: block;
+        }
+        input, button {
+            margin: 1.5vh 0;
+            padding: 2vw;
+            font-size: clamp(14px, 4vw, 18px);
+            width: 90%;
+            max-width: 400px;
+            box-sizing: border-box;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 2vh 4vw;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        h1 {
+            font-size: clamp(20px, 6vw, 40px);
+            margin: 1vh 0;
+        }
+        a {
+            font-size: clamp(14px, 3.5vw, 18px);
+            margin: 1vh 0;
+            display: inline-block;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 3vw;
+            border-radius: 10px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            text-align: center;
+        }
+        .modal-content img {
+            max-width: 100%;
+            max-height: 50vh;
+            margin-bottom: 2vh;
+        }
+        .modal-content h3 {
+            font-size: clamp(16px, 4vw, 20px);
+            margin: 0 0 2vh 0;
+        }
+        .modal-content button {
+            margin: 1vh 2vw;
+            padding: 2vh 4vw;
+            font-size: clamp(14px, 3.5vw, 16px);
+            width: auto;
+            min-width: 120px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 4vw;
+            }
+            input, button {
+                width: 95%;
+                padding: 2.5vw;
+            }
+            button {
+                padding: 2.5vh 5vw;
+            }
+            .modal-content {
+                padding: 4vw;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 5vw;
+                margin: 1vh auto;
+            }
+            input, button {
+                padding: 3vw;
+                font-size: clamp(12px, 3.8vw, 16px);
+            }
+            button {
+                padding: 3vh 6vw;
+            }
+            canvas {
+                min-width: 300px;
+            }
+            .modal-content {
+                padding: 5vw;
+                max-height: 85vh;
+            }
+            .modal-content img {
+                max-height: 40vh;
+            }
+            .modal-content button {
+                min-width: 100px;
+                padding: 2vh 3vw;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .container {
+                padding: 6vw;
+            }
+            input, button {
+                padding: 3.5vw;
+                font-size: clamp(12px, 4vw, 14px);
+            }
+            button {
+                padding: 3vh 7vw;
+            }
+            canvas {
+                min-width: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DAPPERDEN</h1>
+        <input type="file" id="imageInput" accept="image/*" />
+        <br>
+        <button onclick="generatePoster()">Generate Poster</button>
+        <br>
+        <canvas id="canvas"></canvas>
+        <br>
+        <a id="downloadLink" style="display: none;">Download Poster</a>
+    </div>
+
+    <div id="cropModal" class="modal">
+        <div class="modal-content">
+            <img id="imageToCrop" src="" alt="Image to crop">
+            <br>
+            <button onclick="cropImage()">Crop</button>
+            <button onclick="cancelCrop()">Cancel</button>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h3>Confirm Cropped Image</h3>
+            <img id="croppedImagePreview" src="" alt="Cropped image preview">
+            <br>
+            <button onclick="acceptCrop()">Accept</button>
+            <button onclick="rejectCrop()">Cancel</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const imageInput = document.getElementById('imageInput');
+        const downloadLink = document.getElementById('downloadLink');
+        const cropModal = document.getElementById('cropModal');
+        const confirmModal = document.getElementById('confirmModal');
+        const imageToCrop = document.getElementById('imageToCrop');
+        const croppedImagePreview = document.getElementById('croppedImagePreview');
+
+        let uploadedImage = null;
+        let logoImage = null;
+        let frameImage = null;
+        let cropper = null;
+        let croppedImageData = null;
+
+        // Load the logo from the GitHub repository
+        logoImage = new Image();
+        logoImage.src = './logo.png';
+
+        // Load the default static frame from the GitHub repository
+        frameImage = new Image();
+        frameImage.src = './frame.png';
+
+        function resizeCanvas() {
+            const containerWidth = document.querySelector('.container').clientWidth;
+            const canvasSize = Math.max(Math.min(containerWidth - 40, 600), 280);
+            canvas.width = canvasSize;
+            canvas.height = canvasSize;
+        }
+
+        resizeCanvas();
+
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            if (uploadedImage) generatePoster();
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    imageToCrop.src = event.target.result;
+                    cropModal.style.display = 'flex';
+                    if (cropper) cropper.destroy();
+                    cropper = new Cropper(imageToCrop, {
+                        aspectRatio: 1,
+                        viewMode: 1,
+                        autoCropArea: 0.8,
+                        movable: true,
+                        zoomable: true,
+                        scalable: true,
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function cropImage() {
+            if (!cropper) return;
+            const croppedCanvas = cropper.getCroppedCanvas({
+                width: 600,
+                height: 600,
+            });
+            croppedImageData = croppedCanvas.toDataURL('image/png');
+            croppedImagePreview.src = croppedImageData;
+            cropModal.style.display = 'none';
+            confirmModal.style.display = 'flex';
+        }
+
+        function acceptCrop() {
+            uploadedImage = new Image();
+            uploadedImage.src = croppedImageData;
+            uploadedImage.onload = () => {
+                confirmModal.style.display = 'none';
+                cropper.destroy();
+                cropper = null;
+                generatePoster();
+            };
+        }
+
+        function rejectCrop() {
+            confirmModal.style.display = 'none';
+            cropModal.style.display = 'flex';
+            croppedImageData = null;
+            croppedImagePreview.src = '';
+        }
+
+        function cancelCrop() {
+            cropModal.style.display = 'none';
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            imageInput.value = '';
+        }
+
+        function generatePoster() {
+            if (!uploadedImage) {
+                alert('Please upload and crop an image first!');
+                return;
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the uploaded photo, scaled with canvas
+            const targetSize = 600;
+            const scale = canvas.width / 600;
+            const imgWidth = targetSize * scale;
+            const imgHeight = targetSize * scale;
+            const imgX = (canvas.width - imgWidth) / 2;
+            const imgY = (canvas.height - imgHeight) / 2;
+            ctx.drawImage(uploadedImage, imgX, imgY, imgWidth, imgHeight);
+
+            // Draw the default static frame over the photo
+            if (frameImage.complete && frameImage.naturalWidth !== 0) {
+                const frameWidth = targetSize * scale;
+                const frameHeight = targetSize * scale;
+                const frameX = (canvas.width - frameWidth) / 2;
+                const frameY = (canvas.height - frameHeight) / 2;
+                ctx.drawImage(frameImage, frameX, frameY, frameWidth, frameHeight);
+            }
+
+            // Draw the logo at the bottom
+            if (logoImage.complete && logoImage.naturalWidth !== 0) {
+                const logoWidth = canvas.width * 0.24;
+                const logoHeight = canvas.width * 0.12;
+                const logoX = (canvas.width - logoWidth) / 2;
+                const logoY = canvas.height - logoHeight - canvas.width * 0.04;
+                ctx.drawImage(logoImage, logoX, logoY, logoWidth, logoHeight);
+            }
+
+            // Enable download
+            downloadLink.href = canvas.toDataURL('image/png');
+            downloadLink.download = 'poster.png';
+            downloadLink.style.display = 'block';
+            downloadLink.textContent = 'Download Poster';
+        }
+    </script>
+</body>
+</html>
