@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dapperden</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 2vh;
+            background-color: #f4f4f4;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            max-width: 800px;
+            width: 90vw;
+            margin: 2vh auto;
+            background: white;
+            padding: 3vw;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 1px solid #ccc;
+            margin: 2vh auto;
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            display: block;
+            aspect-ratio: 3375 / 6000; /* Maintain 9:16 aspect ratio */
+        }
+        input, button {
+            margin: 1.5vh 0;
+            padding: 2vw;
+            font-size: clamp(14px, 4vw, 18px);
+            width: 90%;
+            max-width: 400px;
+            box-sizing: border-box;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 2vh 4vw;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        h1 {
+            font-size: clamp(20px, 6vw, 40px);
+            margin: 1vh 0;
+        }
+        a {
+            font-size: clamp(14px, 3.5vw, 18px);
+            margin: 1vh 0;
+            display: inline-block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 4vw;
+            }
+            input, button {
+                width: 95%;
+                padding: 2.5vw;
+            }
+            button {
+                padding: 2.5vh 5vw;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 5vw;
+                margin: 1vh auto;
+            }
+            input, button {
+                padding: 3vw;
+                font-size: clamp(12px, 3.8vw, 16px);
+            }
+            button {
+                padding: 3vh 6vw;
+            }
+            canvas {
+                max-width: 300px;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .container {
+                padding: 6vw;
+            }
+            input, button {
+                padding: 3.5vw;
+                font-size: clamp(12px, 4vw, 14px);
+            }
+            button {
+                padding: 3vh 7vw;
+            }
+            canvas {
+                max-width: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DAPPERDEN</h1>
+        <input type="file" id="imageInput" accept="image/*" />
+        <br>
+        <button onclick="generatePoster()">Generate Poster</button>
+        <br>
+        <canvas id="canvas"></canvas>
+        <br>
+        <a id="downloadLink" style="display: none;">Download Poster</a>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const imageInput = document.getElementById('imageInput');
+        const downloadLink = document.getElementById('downloadLink');
+
+        let uploadedImage = null;
+        let logoImage = null;
+        let frameImage = null;
+
+        // Load the logo from the GitHub repository
+        logoImage = new Image();
+        logoImage.src = './logo.png';
+
+        // Load the default static frame from the GitHub repository
+        frameImage = new Image();
+        frameImage.src = './frame.png';
+
+        function resizeCanvas() {
+            // Set the actual canvas resolution to 3375x6000px
+            canvas.width = 3375;
+            canvas.height = 6000;
+        }
+
+        resizeCanvas();
+
+        window.addEventListener('resize', () => {
+            // No need to resize the canvas resolution on window resize
+            // The CSS will handle the display scaling
+            if (uploadedImage) generatePoster();
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    uploadedImage = new Image();
+                    uploadedImage.src = event.target.result;
+                    uploadedImage.onload = () => {
+                        generatePoster();
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function generatePoster() {
+            if (!uploadedImage) {
+                alert('Please upload an image first!');
+                return;
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the uploaded photo, scaled to fit 3375x6000px
+            const targetWidth = 3375;
+            const targetHeight = 6000;
+            const imgX = 0;
+            const imgY = 0;
+            ctx.drawImage(uploadedImage, imgX, imgY, targetWidth, targetHeight);
+
+            // Draw the default static frame over the photo
+            if (frameImage.complete && frameImage.naturalWidth !== 0) {
+                const frameWidth = targetWidth;
+                const frameHeight = targetHeight;
+                const frameX = 0;
+                const frameY = 0;
+                ctx.drawImage(frameImage, frameX, frameY, frameWidth, frameHeight);
+            }
+
+            // Draw the logo at the bottom
+            if (logoImage.complete && logoImage.naturalWidth !== 0) {
+                const logoWidth = canvas.width * 0.24; // 810px at 3375px width
+                const logoHeight = canvas.width * 0.12; // 405px at 3375px width
+                const logoX = (canvas.width - logoWidth) / 2;
+                const logoY = canvas.height - logoHeight - (canvas.width * 0.04); // 135px offset
+                ctx.drawImage(logoImage, logoX, logoY, logoWidth, logoHeight);
+            }
+
+            // Enable download at full resolution (3375x6000px)
+            downloadLink.href = canvas.toDataURL('image/png');
+            downloadLink.download = 'poster.png';
+            downloadLink.style.display = 'block';
+            downloadLink.textContent = 'Download Poster';
+        }
+    </script>
+</body>
+</html>
