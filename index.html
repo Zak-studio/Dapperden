@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dapperden</title>
+    <!-- Include Cropper.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 2vh;
+            background-color: #f4f4f4;
+            margin: 0;
+        }
+        .container {
+            max-width: 90vw;
+            margin: 0 auto;
+            background: white;
+            padding: 2vw;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 1px solid #ccc;
+            margin: 2vh 0;
+            width: 100%;
+            height: auto;
+        }
+        input, button {
+            margin: 1vh 0;
+            padding: 1vw;
+            font-size: clamp(14px, 2vw, 16px);
+            width: 80%;
+            max-width: 300px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 1.5vh 2vw;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        h1 {
+            font-size: clamp(20px, 5vw, 36px);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow: auto;
+            text-align: center;
+        }
+        .modal-content img {
+            max-width: 100%;
+            max-height: 60vh;
+            margin-bottom: 20px;
+        }
+        .modal-content button {
+            margin: 0 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 3vw;
+            }
+            input, button {
+                width: 90%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 4vw;
+            }
+            input, button {
+                padding: 2vw;
+                font-size: clamp(12px, 3vw, 14px);
+            }
+            button {
+                padding: 2vh 3vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DAPPERDEN</h1>
+        <input type="file" id="imageInput" accept="image/*" />
+        <br>
+        <input type="text" id="textInput" placeholder="Enter your Name" />
+        <br>
+        <button onclick="generatePoster()">Generate Poster</button>
+        <br>
+        <canvas id="canvas"></canvas>
+        <br>
+        <a id="downloadLink" style="display: none;">Download Poster</a>
+    </div>
+
+    <!-- Cropping Modal -->
+    <div id="cropModal" class="modal">
+        <div class="modal-content">
+            <img id="imageToCrop" src="" alt="Image to crop">
+            <br>
+            <button onclick="cropImage()">Crop & Use</button>
+            <button onclick="cancelCrop()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Include Cropper.js JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const imageInput = document.getElementById('imageInput');
+        const textInput = document.getElementById('textInput');
+        const downloadLink = document.getElementById('downloadLink');
+        const cropModal = document.getElementById('cropModal');
+        const imageToCrop = document.getElementById('imageToCrop');
+
+        let uploadedImage = null;
+        let logoImage = null;
+        let cropper = null;
+
+        // Load Dapper Den logo
+        logoImage = new Image();
+        logoImage.src = 'https://i.ibb.co/z7YkG5Z/dapper-den-logo.png';
+        logoImage.crossOrigin = 'Anonymous';
+
+        // Dynamically set canvas size based on container width
+        function resizeCanvas() {
+            const containerWidth = document.querySelector('.container').clientWidth;
+            const canvasSize = Math.min(containerWidth - 40, 500);
+            canvas.width = canvasSize;
+            canvas.height = canvasSize;
+        }
+
+        // Initial canvas size
+        resizeCanvas();
+
+        // Resize canvas on window resize
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            if (uploadedImage) generatePoster();
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    imageToCrop.src = event.target.result;
+                    cropModal.style.display = 'flex'; // Show modal
+                    // Initialize Cropper.js
+                    if (cropper) cropper.destroy(); // Destroy previous instance
+                    cropper = new Cropper(imageToCrop, {
+                        aspectRatio: NaN, // Freeform cropping
+                        viewMode: 1, // Restrict crop box to image
+                        autoCropArea: 0.8, // Default crop area
+                        movable: true,
+                        zoomable: true,
+                        scalable: true,
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function cropImage() {
+            if (!cropper) return;
+            // Get the cropped canvas
+            const croppedCanvas = cropper.getCroppedCanvas();
+            uploadedImage = new Image();
+            uploadedImage.src = croppedCanvas.toDataURL('image/png');
+            uploadedImage.onload = () => {
+                cropModal.style.display = 'none'; // Hide modal
+                cropper.destroy();
+                cropper = null;
+                generatePoster();
+            };
+        }
+
+        function cancelCrop() {
+            cropModal.style.display = 'none';
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            imageInput.value = ''; // Reset file input
+        }
+
+        function generatePoster() {
+            if (!uploadedImage) {
+                alert('Please upload and crop an image first!');
+                return;
+            }
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Frame background
+            ctx.fillStyle = '#f0f0f0';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Decorative border
+            ctx.strokeStyle = '#28a745';
+            ctx.lineWidth = canvas.width * 0.02;
+            ctx.strokeRect(15, 15, canvas.width - 30, canvas.height - 30);
+            
+            // "HAPPY CUSTOMER" text
+            ctx.fillStyle = '#000';
+            ctx.font = `bold ${canvas.width * 0.06}px Arial, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.fillText('HAPPY CUSTOMER', canvas.width / 2, canvas.width * 0.1);
+            
+            // Draw cropped image, centered
+            const imgWidth = uploadedImage.naturalWidth;
+            const imgHeight = uploadedImage.naturalHeight;
+            const imgX = (canvas.width - imgWidth) / 2;
+            const imgY = (canvas.height - imgHeight) / 2;
+            ctx.drawImage(uploadedImage, imgX, imgY, imgWidth, imgHeight);
+
+            // Dapper Den logo at bottom
+            if (logoImage.complete && logoImage.naturalWidth !== 0) {
+                const logoWidth = canvas.width * 0.24;
+                const logoHeight = canvas.width * 0.12;
+                const logoX = (canvas.width - logoWidth) / 2;
+                const logoY = canvas.height - logoHeight - canvas.width * 0.04;
+                ctx.drawImage(logoImage, logoX, logoY, logoWidth, logoHeight);
+            }
+
+            // Draw custom text
+            const text = textInput.value || 'Your Text Here';
+            ctx.fillStyle = '#000';
+            ctx.font = `${canvas.width * 0.04}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText(text, canvas.width / 2, canvas.height - (canvas.width * 0.1));
+
+            // Enable download
+            downloadLink.href = canvas.toDataURL('image/png');
+            downloadLink.download = 'poster.png';
+            downloadLink.style.display = 'block';
+            downloadLink.textContent = 'Download Poster';
+        }
+    </script>
+</body>
+</html>
