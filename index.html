@@ -378,9 +378,9 @@
                     cropModal.style.display = 'flex';
                     if (cropper) cropper.destroy();
                     cropper = new Cropper(imageToCrop, {
-                        aspectRatio: 1, // Match the 1:1 aspect ratio of the green area
+                        aspectRatio: 1, // Match the 1:1 aspect ratio of the area
                         viewMode: 1,
-                        autoCropArea: 0.8,
+                        autoCropArea: 1.0, // Crop the entire area
                         movable: true,
                         zoomable: true,
                         scalable: true,
@@ -412,7 +412,15 @@
 
         function cropImage() {
             if (cropper) {
-                const croppedCanvas = cropper.getCroppedCanvas();
+                const croppedCanvas = cropper.getCroppedCanvas({
+                    width: 1728, // Force the output to be exactly 1728x1728
+                    height: 1728,
+                    minWidth: 1728,
+                    minHeight: 1728,
+                    maxWidth: 1728,
+                    maxHeight: 1728,
+                    fillColor: '#fff' // Fill any empty areas with white
+                });
                 uploadedImage = new Image();
                 uploadedImage.src = croppedCanvas.toDataURL('image/png');
                 uploadedImage.onload = () => {
@@ -432,36 +440,14 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Define the green box area (where the photo will be placed)
-            const photoAreaWidth = 1728; // 80% of canvas width (2160px)
-            const photoAreaHeight = 1728; // Square area (1:1 aspect ratio)
+            // Define the photo area (1728x1728px)
+            const photoAreaWidth = 1728;
+            const photoAreaHeight = 1728;
             const photoAreaX = (canvas.width - photoAreaWidth) / 2; // Center horizontally: 216px
             const photoAreaY = 400; // Position 400px from the top
 
-            // Fill the photo area with white (for letterboxing)
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(photoAreaX, photoAreaY, photoAreaWidth, photoAreaHeight);
-
-            // Scale the uploaded photo to fit within the green box while preserving aspect ratio
-            const photoAspectRatio = uploadedImage.width / uploadedImage.height;
-            let photoWidth, photoHeight, photoX, photoY;
-
-            if (photoAspectRatio > 1) {
-                // Photo is wider than tall: fit to width, letterbox height
-                photoWidth = photoAreaWidth;
-                photoHeight = photoAreaWidth / photoAspectRatio;
-                photoX = photoAreaX;
-                photoY = photoAreaY + (photoAreaHeight - photoHeight) / 2; // Center vertically
-            } else {
-                // Photo is taller than wide: fit to height, letterbox width
-                photoHeight = photoAreaHeight;
-                photoWidth = photoAreaHeight * photoAspectRatio;
-                photoX = photoAreaX + (photoAreaWidth - photoWidth) / 2; // Center horizontally
-                photoY = photoAreaY;
-            }
-
-            // Draw the uploaded photo
-            ctx.drawImage(uploadedImage, photoX, photoY, photoWidth, photoHeight);
+            // Draw the uploaded photo - it will be exactly 1728x1728 since we cropped it that way
+            ctx.drawImage(uploadedImage, photoAreaX, photoAreaY, photoAreaWidth, photoAreaHeight);
 
             // Draw the default static frame over the photo
             if (frameImage.complete && frameImage.naturalWidth !== 0) {
