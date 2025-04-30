@@ -109,12 +109,7 @@
             font-size: clamp(14px, 4vw, 16px);
         }
         .rotate-button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            padding: 12px;
+           "padding: 12px;
             margin: 5px;
         }
         .rotate-button:hover {
@@ -485,22 +480,30 @@
                 instagramCanvas.height = 1350;
                 const instagramCtx = instagramCanvas.getContext('2d');
 
-                // Define the photo area in the original canvas
-                const photoAreaWidth = 1728;
-                const photoAreaHeight = 1728;
-                const photoAreaX = (canvas.width - photoAreaWidth) / 2; // 216px
-                const photoAreaY = 1000;
+                // Calculate scaling to fit 2160x3840 into 1080x1350 without cropping
+                const sourceAspect = canvas.width / canvas.height; // 2160/3840 = 0.5625
+                const targetAspect = 1080 / 1350; // 0.8 (4:5)
+                let drawWidth, drawHeight, offsetX, offsetY;
 
-                // For 4:5 aspect ratio, we need to crop the photo area to 1728x2160 (4:5 of 1728px width)
-                const instagramSourceHeight = photoAreaWidth * (5 / 4); // 2160px
-                const instagramSourceY = photoAreaY + (photoAreaHeight - instagramSourceHeight) / 2; // Center vertically
+                // Since source aspect (0.5625) < target aspect (0.8), fit by height
+                drawHeight = 1350;
+                drawWidth = drawHeight * sourceAspect; // 1350 * (2160/3840) ≈ 759.375
+                offsetX = (1080 - drawWidth) / 2; // Center horizontally: (1080 - 759.375) / 2 ≈ 160.3125
+                offsetY = 0;
 
-                // Draw the uploaded photo, cropped to 4:5 and scaled to 1080x1350
+                // Draw the entire original canvas, scaled to fit
                 instagramCtx.drawImage(
                     canvas,
-                    photoAreaX, instagramSourceY, photoAreaWidth, instagramSourceHeight,
-                    0, 0, 1080, 1350
+                    0, 0, canvas.width, canvas.height,
+                    offsetX, offsetY, drawWidth, drawHeight
                 );
+
+                // Fill any empty areas with white
+                instagramCtx.fillStyle = '#fff';
+                if (offsetX > 0) {
+                    instagramCtx.fillRect(0, 0, offsetX, 1350); // Left strip
+                    instagramCtx.fillRect(1080 - offsetX, 0, offsetX, 1350); // Right strip
+                }
 
                 const downloadUrl = instagramCanvas.toDataURL('image/png');
                 downloadImage(downloadUrl, 'poster_instagram.png');
