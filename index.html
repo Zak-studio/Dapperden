@@ -144,6 +144,43 @@
             cursor: pointer;
         }
 
+        /* Download options modal */
+        .download-options-modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .download-options-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            position: relative;
+        }
+        .download-options-content button {
+            width: 100%;
+            max-width: 250px;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: clamp(14px, 4vw, 16px);
+        }
+        .download-options-content .close {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
         /* Download status modal */
         .download-status {
             display: none;
@@ -194,14 +231,14 @@
             button, #downloadButton {
                 padding: 2.5vh 5vw;
             }
-            .modal-content {
+            .modal-content, .download-options-content {
                 width: 90%;
                 padding: 15px;
             }
             .modal-content img {
                 max-height: 50vh;
             }
-            .modal-content button {
+            .modal-content button, .download-options-content button {
                 padding: 10px;
                 font-size: clamp(12px, 3.5vw, 14px);
             }
@@ -237,14 +274,14 @@
             canvas {
                 max-width: 300px;
             }
-            .modal-content {
+            .modal-content, .download-options-content {
                 width: 95%;
                 padding: 10px;
             }
             .modal-content img {
                 max-height: 45vh;
             }
-            .modal-content button {
+            .modal-content button, .download-options-content button {
                 padding: 8px;
                 font-size: clamp(12px, 3.2vw, 14px);
             }
@@ -283,14 +320,14 @@
             canvas {
                 max-width: 280px;
             }
-            .modal-content {
+            .modal-content, .download-options-content {
                 width: 98%;
                 padding: 8px;
             }
             .modal-content img {
                 max-height: 40vh;
             }
-            .modal-content button {
+            .modal-content button, .download-options-content button {
                 padding: 8px;
                 font-size: clamp(12px, 4vw, 14px);
             }
@@ -306,7 +343,7 @@
         <h1>DAPPERDEN</h1>
         <input type="file" id="imageInput" accept="image/*" />
         <br>
-        <button onclick="generatePoster()">Generate Poster</button>
+        <button onclick="showDownloadOptions()">Generate Poster</button>
         <br>
         <canvas id="canvas"></canvas>
         <br>
@@ -328,6 +365,16 @@
         </div>
     </div>
 
+    <!-- Modal for download options -->
+    <div id="downloadOptionsModal" class="download-options-modal">
+        <div class="download-options-content">
+            <span class="close" onclick="closeDownloadOptionsModal()">×</span>
+            <h2>Choose Download Option</h2>
+            <button onclick="downloadOriginal()">Download Original (2160x3840)</button>
+            <button onclick="downloadInstagram()">Download for Instagram (1080x1080)</button>
+        </div>
+    </div>
+
     <!-- Download status modal -->
     <div id="downloadStatus" class="download-status">
         <div class="download-status-content">
@@ -345,11 +392,11 @@
         const cropModal = document.getElementById('cropModal');
         const imageToCrop = document.getElementById('imageToCrop');
         const downloadStatus = document.getElementById('downloadStatus');
+        const downloadOptionsModal = document.getElementById('downloadOptionsModal');
 
         let uploadedImage = null;
         let frameImage = null;
         let cropper = null;
-        let downloadUrl = '';
 
         // Load the default static frame from the GitHub repository
         frameImage = new Image();
@@ -444,7 +491,7 @@
             const photoAreaWidth = 1728;
             const photoAreaHeight = 1728;
             const photoAreaX = (canvas.width - photoAreaWidth) / 2; // Center horizontally: 216px
-            const photoAreaY = 1000; // Position 400px from the top
+            const photoAreaY = 1000; // Position 1000px from the top
 
             // Draw the uploaded photo - it will be exactly 1728x1728 since we cropped it that way
             ctx.drawImage(uploadedImage, photoAreaX, photoAreaY, photoAreaWidth, photoAreaHeight);
@@ -454,37 +501,81 @@
                 ctx.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
             }
 
-            // Enable download at full resolution (2160x3840px)
-            downloadUrl = canvas.toDataURL('image/png');
+            // Show the download button
             downloadButton.style.display = 'block';
-            downloadButton.onclick = () => {
-                // Show downloading status
-                downloadStatus.style.display = 'flex';
-                
-                // Create a small delay to allow the UI to update before starting the download
+        }
+
+        function showDownloadOptions() {
+            if (!uploadedImage) {
+                alert('Please upload an image first!');
+                return;
+            }
+            generatePoster();
+            downloadOptionsModal.style.display = 'flex';
+        }
+
+        function closeDownloadOptionsModal() {
+            downloadOptionsModal.style.display = 'none';
+        }
+
+        function downloadImage(url, filename) {
+            downloadStatus.style.display = 'flex';
+            setTimeout(() => {
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
                 setTimeout(() => {
-                    const link = document.createElement('a');
-                    link.href = downloadUrl;
-                    link.download = 'poster.png';
-                    
-                    // Hide the status when download is complete
-                    link.onclick = () => {
-                        setTimeout(() => {
-                            downloadStatus.style.display = 'none';
-                        }, 1000);
-                    };
-                    
-                    // For browsers that don't support the onclick event on a tags
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    
-                    // Hide the status after a reasonable time in case the onclick doesn't fire
-                    setTimeout(() => {
-                        downloadStatus.style.display = 'none';
-                    }, 3000);
-                }, 100);
-            };
+                    downloadStatus.style.display = 'none';
+                }, 1000);
+            }, 100);
+        }
+
+        function downloadOriginal() {
+            const downloadUrl = canvas.toDataURL('image/png');
+            downloadImage(downloadUrl, 'poster_original.png');
+            closeDownloadOptionsModal();
+        }
+
+        function downloadInstagram() {
+            // Create a new canvas for Instagram size (1080x1080)
+            const instagramCanvas = document.createElement('canvas');
+            instagramCanvas.width = 1080;
+            instagramCanvas.height = 1080;
+            const instagramCtx = instagramCanvas.getContext('2d');
+
+            // Define the photo area in the original canvas
+            const photoAreaWidth = 1728;
+            const photoAreaHeight = 1728;
+            const photoAreaX = (canvas.width - photoAreaWidth) / 2; // 216px
+            const photoAreaY = 1000;
+
+            // Calculate the frame scaling factor
+            const frameScale = 1080 / 1728; // Scale to fit the 1728px photo area into 1080px
+
+            // Draw the uploaded photo, scaled to 1080x1080
+            instagramCtx.drawImage(
+                uploadedImage,
+                0, 0, uploadedImage.width, uploadedImage.height,
+                0, 0, 1080, 1080
+            );
+
+            // Scale and draw the frame
+            // Since the frame is 2160x3840, we need to crop and scale it appropriately
+            // We'll focus on the area that corresponds to the photo area
+            const framePhotoAreaX = photoAreaX; // 216px
+            const framePhotoAreaY = photoAreaY; // 1000px
+            instagramCtx.drawImage(
+                frameImage,
+                framePhotoAreaX, framePhotoAreaY, photoAreaWidth, photoAreaHeight,
+                0, 0, 1080, 1080
+            );
+
+            const downloadUrl = instagramCanvas.toDataURL('image/png');
+            downloadImage(downloadUrl, 'poster_instagram.png');
+            closeDownloadOptionsModal();
         }
     </script>
 </body>
